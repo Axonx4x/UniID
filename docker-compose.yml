@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: astramind-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-astramind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-astramind_dev_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-astramind_digital_id}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-astramind} -d ${POSTGRES_DB:-astramind_digital_id}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - astramind-net
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: astramind-api
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      PROJECT_NAME: ${PROJECT_NAME:-"AstraMind Digital Student ID"}
+      API_V1_STR: ${API_V1_STR:-/api/v1}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SIMULATION_MODE: ${SIMULATION_MODE:-true}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-'["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000"]'}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-astramind}:${POSTGRES_PASSWORD:-astramind_dev_secret}@postgres:5432/${POSTGRES_DB:-astramind_digital_id}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - astramind-net
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: astramind-web
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+      VITE_APP_NAME: ${VITE_APP_NAME:-"AstraMind Digital ID"}
+      VITE_SIMULATION_MODE: ${VITE_SIMULATION_MODE:-true}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - astramind-net
+
+volumes:
+  postgres_data:
+    name: astramind_postgres_data
+
+networks:
+  astramind-net:
+    name: astramind-network
