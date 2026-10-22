@@ -1,300 +1,375 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Shield,
-  QrCode,
-  Users,
+  Zap,
+  Landmark,
+  Smartphone,
   Building2,
+  Users,
   CreditCard,
-  Server,
-  Cpu,
-  RefreshCw,
-  AlertCircle,
-  FileText,
+  QrCode,
+  ArrowRight,
+  CheckCircle2,
+  Star,
+  GraduationCap,
 } from "lucide-react";
-import { Button } from "@/components/common/Button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/common/Card";
-import { Badge } from "@/components/common/Badge";
-import { Alert } from "@/components/common/Alert";
-import { apiClient } from "@/services/apiClient";
-import { HealthResponse, ReadyResponse } from "@/types";
+import { Link } from "react-router-dom";
+import { StudentIdCard } from "@/components/card/StudentIdCard";
+import { useAuth } from "@/auth/AuthContext";
+import { LayoutDashboard } from "lucide-react";
+import { UNIVERSITY_BRANDS } from "@/config/universities";
 
 export const LandingPage: React.FC = () => {
-  const [healthData, setHealthData] = useState<HealthResponse | null>(null);
-  const [readyData, setReadyData] = useState<ReadyResponse | null>(null);
-  const [loadingDiagnostics, setLoadingDiagnostics] = useState(false);
-  const [diagnosticError, setDiagnosticError] = useState<string | null>(null);
-
-  const fetchDiagnostics = async () => {
-    setLoadingDiagnostics(true);
-    setDiagnosticError(null);
-    try {
-      const [health, ready] = await Promise.all([
-        apiClient.getHealth(),
-        apiClient.getReadiness().catch((err) => ({
-          status: "not_ready" as const,
-          timestamp: new Date().toISOString(),
-          environment: "development",
-          version: "0.1.0",
-          database: {
-            connected: false,
-            latency_ms: 0,
-            error: err instanceof Error ? err.message : "Database connection failed",
-          },
-        })),
-      ]);
-      setHealthData(health);
-      setReadyData(ready);
-    } catch (err) {
-      setDiagnosticError(err instanceof Error ? err.message : "Unable to reach backend API");
-    } finally {
-      setLoadingDiagnostics(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDiagnostics();
-  }, []);
-
+  const { user } = useAuth();
   return (
-    <div style={{ backgroundColor: "var(--bg-app)", minHeight: "calc(100vh - 120px)" }}>
-      {/* Hero Section */}
+    <div style={{ backgroundColor: "#ffffff", minHeight: "100vh" }}>
+      {/* =========================================================================
+          HERO SECTION
+          ========================================================================= */}
+      <section className="uni-hero-section">
+        {/* Contextual Background: Holographic Digital ID Cards & Security Geometry */}
+        <div className="uni-bg-context-decorations" aria-hidden="true">
+          <div className="uni-ambient-glow-1" />
+          <div className="uni-ambient-glow-2" />
+
+          {/* Guilloché & Security Geometric Wave Patterns */}
+          <svg className="uni-bg-security-geometry" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="secGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0066FF" stopOpacity="0.18" />
+                <stop offset="50%" stopColor="#0ea5e9" stopOpacity="0.08" />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+              </linearGradient>
+              <pattern id="secMesh" width="48" height="48" patternUnits="userSpaceOnUse">
+                <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#0066FF" strokeWidth="0.75" strokeOpacity="0.05" />
+                <circle cx="24" cy="24" r="1.5" fill="#0066FF" fillOpacity="0.1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#secMesh)" />
+            <path d="M-100,180 C200,80 400,320 800,220 C1200,120 1350,280 1550,200" stroke="url(#secGrad)" strokeWidth="2.5" fill="none" />
+            <path d="M-100,210 C200,110 400,350 800,250 C1200,150 1350,310 1550,230" stroke="url(#secGrad)" strokeWidth="1.5" strokeDasharray="6 4" fill="none" />
+            <path d="M-100,240 C200,140 400,380 800,280 C1200,180 1350,340 1550,260" stroke="url(#secGrad)" strokeWidth="1" fill="none" />
+            <path d="M-100,520 C300,420 500,680 900,560 C1300,440 1400,620 1600,540" stroke="url(#secGrad)" strokeWidth="2" fill="none" />
+          </svg>
+
+          {/* Floating Contextual ID Card 1 (Holographic University Digital ID) */}
+          <div className="uni-bg-floating-card-1">
+            <div className="uni-card-ghost-header">
+              <div className="uni-card-ghost-logo">
+                <GraduationCap size={16} />
+                <span>MALAWI STUDENT IDENTITY</span>
+              </div>
+              <div className="uni-card-ghost-chip" />
+            </div>
+            <div className="uni-card-ghost-body">
+              <div className="uni-card-ghost-avatar" />
+              <div className="uni-card-ghost-lines">
+                <div className="uni-ghost-line w-80" />
+                <div className="uni-ghost-line w-60" />
+                <div className="uni-ghost-line w-40" />
+              </div>
+            </div>
+            <div className="uni-card-ghost-footer">
+              <span>UNIMA &bull; VERIFIED</span>
+              <QrCode size={14} style={{ opacity: 0.6 }} />
+            </div>
+          </div>
+
+          {/* Floating Contextual ID Card 2 (Institutional Digital Badge) */}
+          <div className="uni-bg-floating-card-2">
+            <div className="uni-card-ghost-header">
+              <div className="uni-card-ghost-logo">
+                <Building2 size={15} />
+                <span>MUST SMART CREDENTIAL</span>
+              </div>
+              <CheckCircle2 size={15} color="#059669" style={{ opacity: 0.8 }} />
+            </div>
+            <div className="uni-card-ghost-body">
+              <div className="uni-card-ghost-avatar" style={{ borderRadius: "50%", width: "46px", height: "46px" }} />
+              <div className="uni-card-ghost-lines">
+                <div className="uni-ghost-line w-80" />
+                <div className="uni-ghost-line w-40" />
+              </div>
+            </div>
+            <div className="uni-card-ghost-footer">
+              <span>OFFICIAL STUDENT REGISTRATION</span>
+              <span>2025/2026</span>
+            </div>
+          </div>
+        </div>
+        <div className="container">
+          <div className="uni-hero-grid">
+            {/* Left Column: Headlines & Features */}
+            <div className="uni-hero-left">
+              {/* Headline */}
+              <h1 className="uni-hero-title">
+                Your Student Identity.
+                <span className="highlight-blue">Digital, Safe, and Always</span>
+                <span className="highlight-blue">With You.</span>
+              </h1>
+
+              {/* Subtitle */}
+              <p className="uni-hero-subtitle">
+                UniID provides a secure and convenient digital student ID for Malawi's universities.
+                Access your campus services, manage your credentials and stay connected &mdash; all in one place.
+              </p>
+
+              {/* Hero Action Buttons */}
+              <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "32px", flexWrap: "wrap" }}>
+                {user ? (
+                  <Link
+                    to="/app"
+                    className="uni-primary-btn"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 28px", fontSize: "0.9375rem" }}
+                  >
+                    <LayoutDashboard size={18} />
+                    <span>Go to My Dashboard</span>
+                    <ArrowRight size={16} />
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to="/onboarding"
+                      className="uni-primary-btn"
+                      style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 28px", fontSize: "0.9375rem" }}
+                    >
+                      <span>Get Started</span>
+                      <ArrowRight size={16} />
+                    </Link>
+                    <Link
+                      to="/login"
+                      className="uni-secondary-btn"
+                      style={{ padding: "12px 24px", fontSize: "0.9375rem" }}
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      to="/staff"
+                      className="uni-secondary-btn"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "12px 22px",
+                        fontSize: "0.9375rem",
+                        borderColor: "#BFDBFE",
+                        backgroundColor: "#EFF6FF",
+                        color: "#1D4ED8",
+                        fontWeight: 600,
+                      }}
+                      title="Direct access to the Institutional Reviewer Console"
+                    >
+                      <Building2 size={16} color="#1D4ED8" />
+                      <span>Reviewer Console</span>
+                    </Link>
+                  </>
+                )}
+              </div>
+
+              {/* 4 Feature Columns */}
+              <div id="features" className="uni-features-row">
+                <div className="uni-feature-item">
+                  <div className="uni-feature-icon-box blue">
+                    <Shield size={20} />
+                  </div>
+                  <div className="uni-feature-title">Secure &amp; Verified</div>
+                  <div className="uni-feature-desc">Designed for multi-institution higher-education demonstrations.</div>
+                </div>
+
+                <div className="uni-feature-item">
+                  <div className="uni-feature-icon-box green">
+                    <Zap size={20} />
+                  </div>
+                  <div className="uni-feature-title">Easy Access</div>
+                  <div className="uni-feature-desc">Your student ID and services in one place.</div>
+                </div>
+
+                <div className="uni-feature-item">
+                  <div className="uni-feature-icon-box purple">
+                    <Landmark size={20} />
+                  </div>
+                  <div className="uni-feature-title">University Connected</div>
+                  <div className="uni-feature-desc">Integrated with your institution's systems.</div>
+                </div>
+
+                <div className="uni-feature-item">
+                  <div className="uni-feature-icon-box cyan">
+                    <Smartphone size={20} />
+                  </div>
+                  <div className="uni-feature-title">Always Available</div>
+                  <div className="uni-feature-desc">Access from any device, anytime, anywhere.</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Visual Cutout & Floating Student ID Card */}
+            <div className="uni-hero-visual-wrapper">
+              {/* Azure Circular Backdrop */}
+              <div className="uni-hero-circle-backdrop" />
+
+              {/* Floating ID Card */}
+              <div className="uni-floating-card-anchor">
+                <StudentIdCard
+                  name="Chisomo Banda"
+                  studentNo="2024/00123"
+                  programme="BSc Computer Science"
+                  college="Chancellor College"
+                  institutionName="University of Malawi"
+                  status="Active"
+                  photoUrl="/assets/images/student_id_photo.jpg"
+                />
+              </div>
+
+              {/* Student Photo Cutout Frame */}
+              <div className="uni-hero-student-frame">
+                <img
+                  src="/assets/images/student_hero.jpg"
+                  alt="University Student in Malawi"
+                  className="uni-hero-student-img"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&auto=format&fit=crop&q=80";
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          CALL-TO-ACTION BANNER
+          ========================================================================= */}
+      <section style={{ backgroundColor: "#F8FAFC", padding: "40px 0", borderTop: "1px solid #E2E8F0", borderBottom: "1px solid #E2E8F0" }}>
+        <div className="container">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
+            <div>
+              <h2 style={{ fontSize: "1.25rem", color: "#0F172A", margin: "0 0 4px 0", fontWeight: 700 }}>
+                Ready to Get Your Digital Student ID?
+              </h2>
+              <p style={{ color: "#64748B", fontSize: "0.875rem", margin: 0 }}>
+                Sign in with your university credentials to access your digital identity, campus services, and more.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              {user ? (
+                <Link to="/app" className="uni-btn-login" style={{ fontSize: "0.9375rem", padding: "10px 24px" }}>
+                  <span>Go to My Dashboard</span>
+                  <ArrowRight size={16} style={{ marginLeft: "6px" }} />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/onboarding" className="uni-primary-btn" style={{ fontSize: "0.9375rem", padding: "10px 24px" }}>
+                    <span>Get Started</span>
+                    <ArrowRight size={16} style={{ marginLeft: "6px" }} />
+                  </Link>
+                  <Link to="/login" className="uni-btn-login" style={{ fontSize: "0.9375rem", padding: "10px 24px" }}>
+                    <span>Sign In</span>
+                  </Link>
+                </>
+              )}
+              <a
+                href="#how-it-works"
+                className="btn btn-secondary btn-md"
+                style={{ borderRadius: "8px", fontWeight: 600 }}
+              >
+                Learn More
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          HOW IT WORKS
+          ========================================================================= */}
+      <section id="how-it-works" style={{ padding: "72px 0", backgroundColor: "#ffffff" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 56px auto" }}>
+            <h2 style={{ fontSize: "1.875rem", marginBottom: 12 }}>How It Works</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9375rem" }}>
+              Getting started with your digital student ID is quick and straightforward. Here's how the process works.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 32, maxWidth: 960, margin: "0 auto" }}>
+            {[
+              {
+                step: "01",
+                title: "University Enrollment",
+                desc: "Your institution registers you in the UniID system as part of the enrollment process.",
+                color: "#0066FF",
+                bgColor: "#EFF6FF",
+              },
+              {
+                step: "02",
+                title: "Credential Issuance",
+                desc: "Once verified by your university registry, your digital student ID credential is issued securely.",
+                color: "#059669",
+                bgColor: "#ecfdf5",
+              },
+              {
+                step: "03",
+                title: "Access & Verify",
+                desc: "Sign in to view your ID, present your QR code for verification, and access campus services instantly.",
+                color: "#7c3aed",
+                bgColor: "#f3e8ff",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                style={{
+                  textAlign: "center",
+                  padding: "32px 24px",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid var(--bg-border)",
+                  backgroundColor: "#ffffff",
+                  transition: "box-shadow 0.2s ease",
+                }}
+              >
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    backgroundColor: item.bgColor,
+                    color: item.color,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 800,
+                    fontSize: "1.25rem",
+                    fontFamily: "var(--font-family-display)",
+                    margin: "0 auto 16px auto",
+                  }}
+                >
+                  {item.step}
+                </div>
+                <h3 style={{ fontSize: "1.125rem", marginBottom: 8 }}>{item.title}</h3>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          PLATFORM BENEFITS
+          ========================================================================= */}
       <section
+        id="about"
         style={{
-          backgroundColor: "var(--color-primary)",
-          color: "#ffffff",
-          padding: "64px 0 72px 0",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          backgroundColor: "#F8FAFC",
+          padding: "72px 0",
+          borderTop: "1px solid var(--bg-border)",
+          borderBottom: "1px solid var(--bg-border)",
         }}
       >
         <div className="container">
-          <div style={{ maxWidth: 840, margin: "0 auto", textAlign: "center" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-              <Badge variant="navy" icon={<Shield size={12} />}>
-                Higher Education Identity &bull; Malawi
-              </Badge>
-              <Badge variant="warning">
-                Phase 1 Foundation
-              </Badge>
-            </div>
-
-            <h1
-              style={{
-                fontFamily: "var(--font-family-display)",
-                fontSize: "clamp(2rem, 4vw, 3rem)",
-                fontWeight: 700,
-                color: "#ffffff",
-                letterSpacing: "-0.5px",
-                lineHeight: 1.2,
-                marginBottom: 20,
-              }}
-            >
-              Unified Digital Student ID &amp; Verification Platform
-            </h1>
-
-            <p
-              style={{
-                fontSize: "clamp(1rem, 1.5vw, 1.125rem)",
-                color: "#cbd5e1",
-                lineHeight: 1.6,
-                marginBottom: 32,
-              }}
-            >
-              A multi-tenant identity verification infrastructure engineered for universities in Malawi.
-              Delivering secure digital credentials, real-time QR verification, and automated registry lifecycle
-              management without replacing existing university management systems.
-            </p>
-
-            {/* Disclaimer Alert */}
-            <div
-              style={{
-                backgroundColor: "rgba(15, 23, 42, 0.6)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                borderRadius: "var(--radius-lg)",
-                padding: "16px 20px",
-                textAlign: "left",
-                fontSize: "0.875rem",
-                color: "#e2e8f0",
-                marginBottom: 32,
-                display: "flex",
-                gap: 12,
-                alignItems: "flex-start",
-              }}
-            >
-              <AlertCircle size={20} color="#38bdf8" style={{ flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <strong style={{ color: "#ffffff" }}>Pilot Evaluation Environment:</strong> This interface represents
-                an engineering demonstration platform prepared for institutional review. Sample records (such as LUANAR
-                City Campus fixtures) are synthetic and do not claim formal operational deployment or authorized student
-                data access.
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
-              <a href="#diagnostics" className="btn btn-accent btn-lg">
-                <Cpu size={16} />
-                <span>Verify System Contracts</span>
-              </a>
-              <a
-                href="http://localhost:8000/api/v1/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-outline btn-lg"
-                style={{ color: "#ffffff", borderColor: "rgba(255, 255, 255, 0.3)" }}
-              >
-                <FileText size={16} />
-                <span>API Swagger Schema</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Live System Contracts & Connectivity Diagnostics */}
-      <section id="diagnostics" style={{ padding: "48px 0" }}>
-        <div className="container">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <Server size={18} color="var(--color-accent)" />
-                <h2 style={{ fontSize: "1.5rem", margin: 0 }}>System Readiness &amp; Connectivity</h2>
-              </div>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>
-                Live verification of FastAPI backend contracts and PostgreSQL database persistence.
-              </p>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchDiagnostics}
-              loading={loadingDiagnostics}
-              icon={<RefreshCw size={13} />}
-            >
-              Execute Health Probe
-            </Button>
-          </div>
-
-          {diagnosticError && (
-            <Alert variant="error" title="Backend Connection Error">
-              {diagnosticError}. Ensure the FastAPI server is running on port 8000.
-            </Alert>
-          )}
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 20,
-              marginBottom: 48,
-            }}
-          >
-            {/* API Health Card */}
-            <Card>
-              <CardHeader>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <CardTitle>FastAPI Backend</CardTitle>
-                  <Badge variant={healthData ? "success" : "error"}>
-                    {healthData ? "Operational" : "Unreachable"}
-                  </Badge>
-                </div>
-                <CardDescription>Endpoint: GET /api/v1/health</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: "0.875rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Status:</span>
-                    <strong>{healthData?.status || "Offline"}</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Environment:</span>
-                    <code>{healthData?.environment || "N/A"}</code>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>API Version:</span>
-                    <span>v{healthData?.version || "0.1.0"}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Simulation Mode:</span>
-                    <Badge variant="navy">Active</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Database Readiness Card */}
-            <Card>
-              <CardHeader>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <CardTitle>PostgreSQL 16</CardTitle>
-                  <Badge variant={readyData?.database.connected ? "success" : "error"}>
-                    {readyData?.database.connected ? "Connected" : "Disconnected"}
-                  </Badge>
-                </div>
-                <CardDescription>Endpoint: GET /api/v1/ready</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: "0.875rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Subsystem State:</span>
-                    <strong>{readyData?.status === "ready" ? "Ready" : "Degraded / Unready"}</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Query Latency:</span>
-                    <span>{readyData?.database.latency_ms ? `${readyData.database.latency_ms} ms` : "N/A"}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Alembic Migrations:</span>
-                    <Badge variant="success">0001_initial Applied</Badge>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Driver:</span>
-                    <code>psycopg 3 (binary)</code>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tenant Isolation Model */}
-            <Card>
-              <CardHeader>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <CardTitle>Tenant Isolation</CardTitle>
-                  <Badge variant="info">Multi-Tenant</Badge>
-                </div>
-                <CardDescription>Architecture Boundary</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: "0.875rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Partition Model:</span>
-                    <strong>Institution ID / Code</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Pilot Reference:</span>
-                    <code>LUANAR City Campus</code>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Audit Timestamps:</span>
-                    <span>Strict UTC DateTime</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-muted)" }}>Integration Layer:</span>
-                    <span>Simulation Adapters</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Architectural Tenets */}
-      <section style={{ backgroundColor: "#ffffff", padding: "64px 0", borderTop: "1px solid var(--bg-border)", borderBottom: "1px solid var(--bg-border)" }}>
-        <div className="container">
           <div style={{ textAlign: "center", maxWidth: 700, margin: "0 auto 48px auto" }}>
-            <h2 style={{ fontSize: "1.875rem", marginBottom: 12 }}>Core Architecture Tenets</h2>
+            <h2 style={{ fontSize: "1.875rem", marginBottom: 12 }}>Why Universities Choose UniID</h2>
             <p style={{ color: "var(--text-muted)" }}>
-              The platform adheres to strict engineering and security contracts established for higher education identity management.
+              Designed specifically for the higher education landscape in Malawi, UniID delivers security, transparency, and operational efficiency.
             </p>
           </div>
 
@@ -305,190 +380,222 @@ export const LandingPage: React.FC = () => {
               gap: 24,
             }}
           >
-            <div style={{ padding: 24, backgroundColor: "var(--bg-app)", borderRadius: "var(--radius-lg)", border: "1px solid var(--bg-border)" }}>
-              <div style={{ width: 40, height: 40, borderRadius: "8px", backgroundColor: "#e0f2fe", display: "flex", alignItems: "center", justifyContent: "center", color: "#0284c7", marginBottom: 16 }}>
-                <Building2 size={20} />
+            {[
+              {
+                icon: <Building2 size={20} />,
+                title: "Institution-Level Security",
+                desc: "Each university operates within its own secure environment. Student data, credentials, and administrative actions are fully isolated between institutions.",
+                iconBg: "#e0f2fe",
+                iconColor: "#0284c7",
+              },
+              {
+                icon: <Users size={20} />,
+                title: "Registry Integration",
+                desc: "UniID connects with your university's student registry to ensure real-time eligibility verification and enrollment status, eliminating outdated records.",
+                iconBg: "#ecfdf5",
+                iconColor: "#059669",
+              },
+              {
+                icon: <CreditCard size={20} />,
+                title: "Transparent Fee Management",
+                desc: "Card fees and student verification are tracked independently. Payment status does not affect enrollment verification, ensuring fair and accurate records.",
+                iconBg: "#fef3c7",
+                iconColor: "#d97706",
+              },
+              {
+                icon: <QrCode size={20} />,
+                title: "Secure QR Verification",
+                desc: "Every student ID includes a tamper-proof QR code verified in real-time against the university's records. No personal data is exposed on the code itself.",
+                iconBg: "#f3e8ff",
+                iconColor: "#9333ea",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                style={{
+                  padding: 24,
+                  backgroundColor: "#ffffff",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid var(--bg-border)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "8px",
+                    backgroundColor: item.iconBg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: item.iconColor,
+                    marginBottom: 16,
+                  }}
+                >
+                  {item.icon}
+                </div>
+                <h3 style={{ fontSize: "1.125rem", marginBottom: 8 }}>{item.title}</h3>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                  {item.desc}
+                </p>
               </div>
-              <h3 style={{ fontSize: "1.125rem", marginBottom: 8 }}>Institution-Scoped Tenants</h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                Each university operates as an isolated tenant. Records, credentials, and audit logs are strictly partitioned so administrators cannot access peer institution data.
-              </p>
-            </div>
-
-            <div style={{ padding: 24, backgroundColor: "var(--bg-app)", borderRadius: "var(--radius-lg)", border: "1px solid var(--bg-border)" }}>
-              <div style={{ width: 40, height: 40, borderRadius: "8px", backgroundColor: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center", color: "#059669", marginBottom: 16 }}>
-                <Users size={20} />
-              </div>
-              <h3 style={{ fontSize: "1.125rem", marginBottom: 8 }}>Registry as Authority</h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                AstraMind synchronizes student eligibility from the university's authorized system of record rather than independently deciding enrollment or academic standing.
-              </p>
-            </div>
-
-            <div style={{ padding: 24, backgroundColor: "var(--bg-app)", borderRadius: "var(--radius-lg)", border: "1px solid var(--bg-border)" }}>
-              <div style={{ width: 40, height: 40, borderRadius: "8px", backgroundColor: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", color: "#d97706", marginBottom: 16 }}>
-                <CreditCard size={20} />
-              </div>
-              <h3 style={{ fontSize: "1.125rem", marginBottom: 8 }}>Payment Separation</h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                Payment of the annual card fee does not constitute proof of student identity or academic enrollment. Both conditions must be met independently.
-              </p>
-            </div>
-
-            <div style={{ padding: 24, backgroundColor: "var(--bg-app)", borderRadius: "var(--radius-lg)", border: "1px solid var(--bg-border)" }}>
-              <div style={{ width: 40, height: 40, borderRadius: "8px", backgroundColor: "#f3e8ff", display: "flex", alignItems: "center", justifyContent: "center", color: "#9333ea", marginBottom: 16 }}>
-                <QrCode size={20} />
-              </div>
-              <h3 style={{ fontSize: "1.125rem", marginBottom: 8 }}>Backend-Verified QR Codes</h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                QR codes contain tamper-evident cryptographic references verified against backend business rules rather than exposing plaintext student data on screen.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Multi-Phase Product Roadmap */}
-      <section id="roadmap" style={{ padding: "64px 0" }}>
+      {/* =========================================================================
+          UNIVERSITY DIRECTORY
+          ========================================================================= */}
+      <section id="universities" style={{ padding: "72px 0", backgroundColor: "#ffffff" }}>
         <div className="container">
-          <div style={{ textAlign: "center", maxWidth: 700, margin: "0 auto 48px auto" }}>
-            <h2 style={{ fontSize: "1.875rem", marginBottom: 12 }}>Platform Implementation Plan</h2>
-            <p style={{ color: "var(--text-muted)" }}>
-              Structured, incremental delivery ensuring verifiable engineering milestones before moving to interactive modules.
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px auto" }}>
+            <h2 style={{ fontSize: "1.875rem", marginBottom: 12 }}>University directory</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9375rem" }}>
+              Institutions represented in this Malawi higher-education demonstration.
             </p>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 900, margin: "0 auto" }}>
-            {/* Phase 1 */}
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "var(--radius-lg)",
-                padding: "24px",
-                border: "2px solid var(--color-accent)",
-                display: "flex",
-                gap: 20,
-                alignItems: "flex-start",
-              }}
-            >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 20,
+              maxWidth: 900,
+              margin: "0 auto",
+            }}
+          >
+            {UNIVERSITY_BRANDS.map((uni) => (
               <div
+                key={uni.code}
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  backgroundColor: "var(--color-primary-subtle)",
-                  color: "var(--color-accent)",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 700,
-                  flexShrink: 0,
+                  gap: 12,
+                  padding: "16px 20px",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid var(--bg-border)",
+                  backgroundColor: "#f8fafc",
+                  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
                 }}
               >
-                P1
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-                  <h3 style={{ fontSize: "1.25rem", margin: 0 }}>Repository Foundation &amp; Engineering Contracts</h3>
-                  <Badge variant="success">Completed &amp; Executable</Badge>
+                <div className={`landing-institution-logo university-logo-frame university-logo-frame--${uni.slug}`}>
+                  <img className="university-logo" src={uni.logoSrc} alt={`${uni.name} logo`} />
                 </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: 12, lineHeight: 1.6 }}>
-                  Monorepo architecture, FastAPI backend with /health and /ready probes, SQLAlchemy 2.x session management,
-                  Alembic migrations, PostgreSQL Docker Compose setup, strict TypeScript configuration, design tokens, and comprehensive architecture specifications.
-                </p>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <span className="badge badge-default">FastAPI 0.115+</span>
-                  <span className="badge badge-default">SQLAlchemy 2.0</span>
-                  <span className="badge badge-default">Alembic</span>
-                  <span className="badge badge-default">Vite + React</span>
-                  <span className="badge badge-default">Pytest Suite</span>
-                  <span className="badge badge-default">Playwright Ready</span>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "#0F172A" }}>{uni.name}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                    <CheckCircle2 size={11} style={{ display: "inline", marginRight: 3, verticalAlign: "-1px" }} />
+                    Institution directory
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Phase 2 */}
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "var(--radius-lg)",
-                padding: "24px",
-                border: "1px solid var(--bg-border)",
-                display: "flex",
-                gap: 20,
-                alignItems: "flex-start",
-                opacity: 0.85,
-              }}
-            >
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  backgroundColor: "var(--bg-surface-raised)",
-                  color: "var(--text-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
-              >
-                P2
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-                  <h3 style={{ fontSize: "1.25rem", margin: 0 }}>Student Digital ID &amp; Offline Display</h3>
-                  <Badge variant="default">Phase 2 Scope</Badge>
-                </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: 8, lineHeight: 1.6 }}>
-                  Institutional digital card view, student photo, registration number, programme, academic year, expiry date,
-                  offline display caching, and full-screen dynamic QR code presentation.
-                </p>
-              </div>
-            </div>
-
-            {/* Phase 3 */}
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "var(--radius-lg)",
-                padding: "24px",
-                border: "1px solid var(--bg-border)",
-                display: "flex",
-                gap: 20,
-                alignItems: "flex-start",
-                opacity: 0.85,
-              }}
-            >
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  backgroundColor: "var(--bg-surface-raised)",
-                  color: "var(--text-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
-              >
-                P3
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-                  <h3 style={{ fontSize: "1.25rem", margin: 0 }}>QR Verification &amp; Registry Lifecycle Administration</h3>
-                  <Badge variant="default">Phase 3 Scope</Badge>
-                </div>
-                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: 8, lineHeight: 1.6 }}>
-                  Verifier interface for campus security/exam officers (Active, Revoked, Expired results), Registry administrative
-                  dashboard for credential issuance and revocation, and simulated annual fee payment flows.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", lineHeight: 1.5, maxWidth: 700, margin: "24px auto 0", textAlign: "center" }}>
+            University names and marks are displayed for identification only. They do not indicate endorsement, affiliation, or a live institutional integration.
+          </p>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          STUDENT TESTIMONIALS
+          ========================================================================= */}
+      <section style={{ padding: "64px 0", backgroundColor: "#F8FAFC", borderTop: "1px solid var(--bg-border)" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px auto" }}>
+            <h2 style={{ fontSize: "1.875rem", marginBottom: 12 }}>What Students Say</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9375rem" }}>
+              Hear from students across Malawi who are already using UniID.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, maxWidth: 960, margin: "0 auto" }}>
+            {[
+              {
+                quote: "I no longer worry about losing my ID card. UniID is always on my phone and I can verify my identity anywhere on campus.",
+                name: "Chisomo B.",
+                programme: "BSc Computer Science",
+                uni: "University of Malawi",
+              },
+              {
+                quote: "The QR verification is so fast. Security just scans my phone and I'm through the gate in seconds. Much better than the old plastic cards.",
+                name: "Thandiwe M.",
+                programme: "Diploma in Agriculture",
+                uni: "LUANAR",
+              },
+              {
+                quote: "As a registry administrator, the credential lifecycle management has streamlined our entire ID issuance process. It's a game changer.",
+                name: "James K.",
+                programme: "Registry Office",
+                uni: "MUBAS",
+              },
+            ].map((t) => (
+              <div
+                key={t.name}
+                style={{
+                  padding: 24,
+                  backgroundColor: "#ffffff",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid var(--bg-border)",
+                }}
+              >
+                <div style={{ display: "flex", gap: 2, marginBottom: 12 }}>
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} size={14} fill="#FBBF24" color="#FBBF24" />
+                  ))}
+                </div>
+                <p style={{ fontSize: "0.9375rem", color: "#334155", lineHeight: 1.7, fontStyle: "italic", marginBottom: 16 }}>
+                  "{t.quote}"
+                </p>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "#0F172A" }}>{t.name}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#64748B" }}>{t.programme} &bull; {t.uni}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          FINAL CTA
+          ========================================================================= */}
+      <section id="support" style={{ padding: "72px 0", backgroundColor: "#ffffff" }}>
+        <div className="container" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto" }}>
+          <h2 style={{ fontSize: "1.875rem", marginBottom: 12 }}>Get Started Today</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.9375rem", marginBottom: 28 }}>
+            If your university is part of the UniID network, sign in with your institutional credentials to access your digital student ID. Need help? Contact your university's registry office.
+          </p>
+          {user ? (
+            <Link
+              to="/app"
+              className="uni-primary-btn"
+              style={{ fontSize: "1rem", padding: "12px 32px", display: "inline-flex", alignItems: "center", gap: "8px" }}
+            >
+              <LayoutDashboard size={18} />
+              <span>Go to My Dashboard</span>
+              <ArrowRight size={18} />
+            </Link>
+          ) : (
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+              <Link
+                to="/onboarding"
+                className="uni-primary-btn"
+                style={{ fontSize: "1rem", padding: "12px 32px", display: "inline-flex", alignItems: "center", gap: "8px" }}
+              >
+                <span>Get Started</span>
+                <ArrowRight size={18} />
+              </Link>
+              <Link
+                to="/login"
+                className="uni-btn-login"
+                style={{ fontSize: "1rem", padding: "12px 32px", display: "inline-flex", alignItems: "center", gap: "8px" }}
+              >
+                <span>Sign In</span>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </div>

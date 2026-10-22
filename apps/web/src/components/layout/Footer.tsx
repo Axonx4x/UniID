@@ -1,4 +1,5 @@
-import { ShieldCheck } from "lucide-react";
+import { GraduationCap, Mail, Phone, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Footer: React.FC = () => {
   return (
@@ -23,47 +24,68 @@ export const Footer: React.FC = () => {
         >
           {/* Brand & Purpose */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff", marginBottom: "12px" }}>
-              <ShieldCheck size={20} color="var(--color-accent)" />
-              <span style={{ fontFamily: "var(--font-family-display)", fontWeight: 700, fontSize: "1.1rem" }}>
-                AstraMind Digital Student ID
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#ffffff", marginBottom: "12px" }}>
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "6px",
+                  backgroundColor: "#0066FF",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#ffffff",
+                }}
+              >
+                <GraduationCap size={18} />
+              </div>
+              <span style={{ fontFamily: "var(--font-family-display)", fontWeight: 700, fontSize: "1.2rem", letterSpacing: "-0.3px" }}>
+                UniID Platform
               </span>
             </div>
             <p style={{ color: "#64748b", fontSize: "0.875rem", lineHeight: 1.6 }}>
-              A multi-tenant digital student identity, lifecycle management, and credential verification platform for
-              higher education institutions in Malawi.
+              A secure digital student identity and credential verification
+              platform for higher education institutions across Malawi.
             </p>
           </div>
 
-          {/* Architectural Constraints */}
+          {/* Quick Links */}
           <div>
             <h4 style={{ color: "#f8fafc", fontSize: "0.875rem", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Engineering Tenets
+              Quick Links
             </h4>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, color: "#64748b", fontSize: "0.8125rem", lineHeight: 1.8 }}>
-              <li>&bull; Multi-Tenant Isolation per University</li>
-              <li>&bull; Institutional System of Record as Authority</li>
-              <li>&bull; Verification via Backend Cryptographic Rules</li>
-              <li>&bull; Payment Separation from Eligibility</li>
-              <li>&bull; Explicit UTC Audit Logging</li>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, color: "#64748b", fontSize: "0.8125rem", lineHeight: 2.2 }}>
+              <li><Link to="/" style={{ color: "#94a3b8", textDecoration: "none" }}>Home</Link></li>
+              <li><a href="#features" style={{ color: "#94a3b8", textDecoration: "none" }}>Features</a></li>
+              <li><a href="#universities" style={{ color: "#94a3b8", textDecoration: "none" }}>University Directory</a></li>
+              <li><Link to="/login" style={{ color: "#94a3b8", textDecoration: "none" }}>Student Login</Link></li>
+              <li><a href="#support" style={{ color: "#94a3b8", textDecoration: "none" }}>Help & Support</a></li>
             </ul>
           </div>
 
-          {/* Target Institutions Context */}
+          {/* Contact */}
           <div>
             <h4 style={{ color: "#f8fafc", fontSize: "0.875rem", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Pilot & Integration Scope
+              Contact Us
             </h4>
-            <p style={{ color: "#64748b", fontSize: "0.8125rem", lineHeight: 1.6 }}>
-              Designed for pilot evaluation with public and private universities in Malawi (e.g. LUANAR City Campus, KUHeS, MUST, MZUNI).
-            </p>
-            <div style={{ marginTop: "12px", fontSize: "0.75rem", color: "#475569" }}>
-              All institution marks and sample records in this demo remain illustrative.
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", color: "#64748b", fontSize: "0.8125rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Mail size={14} style={{ flexShrink: 0 }} />
+                <span>support@uniid.mw</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Phone size={14} style={{ flexShrink: 0 }} />
+                <span>+265 1 234 567</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <MapPin size={14} style={{ flexShrink: 0 }} />
+                <span>Lilongwe, Malawi</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar & Disclaimer */}
+        {/* Bottom Bar */}
         <div
           style={{
             borderTop: "1px solid #1e293b",
@@ -78,13 +100,12 @@ export const Footer: React.FC = () => {
           }}
         >
           <div>
-            &copy; {new Date().getFullYear()} AstraMind Labs. Phase 1 Engineering Foundation &amp; Architecture Contracts.
+            &copy; {new Date().getFullYear()} UniID &bull; AstraMind Digital Student Identity.
           </div>
           <div style={{ display: "flex", gap: "16px" }}>
-            <span>FastAPI 0.115+</span>
-            <span>SQLAlchemy 2.0</span>
-            <span>PostgreSQL 16</span>
-            <span>React 18 + Vite</span>
+            <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>Privacy Policy</a>
+            <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>Terms of Service</a>
+            <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>Cookie Policy</a>
           </div>
         </div>
       </div>

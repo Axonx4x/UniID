@@ -1,5 +1,7 @@
 # Backend Dependencies for AstraMind Digital Student ID
-fastapi>=0.115.0,<0.144.0
+fastapi==0.115.6
+starlette==0.41.3
+anyio==4.7.0
 uvicorn[standard]>=0.30.0,<0.41.0
 pydantic>=2.8.0,<3.0.0
 pydantic-settings>=2.4.0,<3.0.0
@@ -7,6 +9,8 @@ sqlalchemy>=2.0.32,<2.1.0
 alembic>=1.13.2,<2.0.0
 psycopg[binary]>=3.2.0,<4.0.0
 python-dotenv>=1.0.1
-httpx>=0.27.0
+argon2-cffi>=23.1.0,<26.0.0
+httpx==0.27.2
 pytest>=8.3.0
 pytest-asyncio>=0.23.0
+segno==1.6.6

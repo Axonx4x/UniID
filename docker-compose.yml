@@ -34,6 +34,10 @@ services:
       SIMULATION_MODE: ${SIMULATION_MODE:-true}
       BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-'["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000"]'}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-astramind}:${POSTGRES_PASSWORD:-astramind_dev_secret}@postgres:5432/${POSTGRES_DB:-astramind_digital_id}
+      SESSION_SECRET: ${SESSION_SECRET:-development-only-session-secret-change-me}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-astramind_session}
+      SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-480}
+      CREDENTIAL_VALIDITY_DAYS: ${CREDENTIAL_VALIDITY_DAYS:-365}
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:

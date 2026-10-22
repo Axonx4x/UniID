@@ -1,4 +1,4 @@
-.PHONY: help install dev-api dev-web test-api test-web lint-web typecheck-web build-web db-up db-down db-migrate test clean
+.PHONY: help install dev-api dev-web test-api test-web lint-web typecheck-web build-web db-up db-down db-migrate db-seed demo-seed test clean
 
 PYTHON ?= .venv/bin/python3
 PIP ?= .venv/bin/pip
@@ -11,6 +11,8 @@ help:
 	@echo "make install         - Initialize Python venv and install all dependencies"
 	@echo "make db-up           - Start PostgreSQL container via Docker Compose"
 	@echo "make db-migrate      - Run Alembic database migrations"
+	@echo "make db-seed         - Seed deterministic synthetic development data"
+	@echo "make demo-seed       - Seed the opt-in LUANAR synthetic presenter roster (requires UNIID_DEMO_MODE=true)"
 	@echo "make db-down         - Stop PostgreSQL container"
 	@echo "make dev-api         - Start FastAPI backend server (port 8000)"
 	@echo "make dev-web         - Start Vite frontend dev server (port 5173)"
@@ -37,6 +39,12 @@ db-down:
 db-migrate:
 	PYTHONPATH=apps/api $(ALEMBIC) -c apps/api/alembic.ini upgrade head
 
+db-seed:
+	PYTHONPATH=apps/api $(PYTHON) scripts/seed_demo_tenant.py
+
+demo-seed:
+	PYTHONPATH=apps/api $(PYTHON) scripts/seed_luanar_demo.py
+
 dev-api:
 	cd apps/api && ../../$(PYTHON) -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
@@ -55,7 +63,7 @@ typecheck-web:
 build-web:
 	cd apps/web && npm run build
 
-test: test-api typecheck-web lint-web
+test: test-api typecheck-web lint-web build-web
 	@echo "==> All backend and frontend verification checks passed."
 
 clean:

@@ -15,12 +15,13 @@ router = APIRouter(tags=["monitoring"])
     summary="Application liveness probe",
     description="Returns application status, version, and simulation mode flag. Indicates process is running.",
 )
-def get_health() -> HealthResponse:
+async def get_health() -> HealthResponse:
     return HealthResponse(
         status="healthy",
         environment=settings.ENVIRONMENT,
         version=__version__,
         simulation_mode=settings.SIMULATION_MODE,
+        uniid_demo_mode=settings.UNIID_DEMO_MODE,
     )
 
 
@@ -34,7 +35,7 @@ def get_health() -> HealthResponse:
         503: {"description": "Subsystem readiness check failed"},
     },
 )
-def get_ready(response: Response) -> ReadyResponse:
+async def get_ready(response: Response) -> ReadyResponse:
     db_check = check_db_connectivity()
 
     if not db_check["connected"]:

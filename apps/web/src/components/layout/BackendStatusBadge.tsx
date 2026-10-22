@@ -62,12 +62,12 @@ export const BackendStatusBadge: React.FC = () => {
         display: "inline-flex",
         alignItems: "center",
         gap: "8px",
-        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "#f1f5f9",
         padding: "4px 10px",
         borderRadius: "var(--radius-full)",
-        border: "1px solid rgba(255, 255, 255, 0.12)",
+        border: "1px solid #e2e8f0",
         fontSize: "var(--font-size-xs)",
-        color: "#f8fafc",
+        color: "#334155",
       }}
       title={
         status === "connected"
@@ -92,17 +92,17 @@ export const BackendStatusBadge: React.FC = () => {
               : "#ef4444",
           boxShadow:
             status === "connected"
-              ? "0 0 6px #10b981"
+              ? "0 0 6px rgba(16, 185, 129, 0.4)"
               : status === "degraded"
-              ? "0 0 6px #f59e0b"
-              : "0 0 6px #ef4444",
+              ? "0 0 6px rgba(245, 158, 11, 0.4)"
+              : "0 0 6px rgba(239, 68, 68, 0.4)",
         }}
       />
 
       <span style={{ fontWeight: 500 }}>
         {status === "checking" && "Connecting..."}
-        {status === "connected" && `API v${health?.version || "1.0"} &bull; DB Live (${ready?.database.latency_ms}ms)`}
-        {status === "degraded" && "API Live &bull; DB Offline"}
+        {status === "connected" && `API v${health?.version || "1.0"} • DB Live (${ready?.database.latency_ms}ms)`}
+        {status === "degraded" && "API Live • DB Offline"}
         {status === "error" && "Backend Offline"}
       </span>
 
@@ -111,7 +111,7 @@ export const BackendStatusBadge: React.FC = () => {
         onClick={checkStatus}
         disabled={isRefreshing}
         style={{
-          color: "#94a3b8",
+          color: "#64748b",
           display: "flex",
           alignItems: "center",
           padding: "2px",

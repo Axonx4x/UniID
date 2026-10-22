@@ -1,7 +1,7 @@
 """Database session and connection engine management."""
 
 import time
-from typing import Generator, Dict, Any
+from typing import AsyncGenerator, Dict, Any
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -26,7 +26,7 @@ SessionLocal = sessionmaker(
 )
 
 
-def get_db() -> Generator[Session, None, None]:
+async def get_db() -> AsyncGenerator[Session, None]:
     """FastAPI dependency yielding an isolated database session per request."""
     db: Session = SessionLocal()
     try:

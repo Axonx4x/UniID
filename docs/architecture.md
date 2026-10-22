@@ -1,170 +1,109 @@
-# AstraMind Digital Student ID: System Architecture
+# Architecture
 
-## 1. System Boundaries and Overview
+## System boundary
 
-AstraMind Digital Student ID is a multi-tenant digital student identity, lifecycle management, and credential verification platform for higher education institutions in Malawi.
+The product is a modular monolith: a React/Vite browser application calls one FastAPI API, which owns authorization and persists authoritative state in PostgreSQL. University and payment systems remain behind adapter interfaces and are simulated. The platform is not the source of truth for enrollment and does not treat payment as identity evidence.
 
-```
-+-----------------------------------------------------------------------------------------+
-|                                    Client Layer                                         |
-|                                                                                         |
-|   +-----------------------+   +-----------------------+   +-------------------------+   |
-|   | Student Web App / PWA |   | Security / Verifier   |   | Registry Admin Portal   |   |
-|   | (Offline Card & QR)   |   | (QR Scanner & Check)  |   | (Issue, Revoke, Audit)  |   |
-|   +-----------+-----------+   +-----------+-----------+   +------------+------------+   |
-|               |                           |                            |                |
-+---------------|---------------------------|----------------------------|----------------+
-                |                           |                            |
-                +---------------------------+----------------------------+
-                                            |  HTTPS (JSON REST)
-                                            v
-+-----------------------------------------------------------------------------------------+
-|                           AstraMind Backend (Modular Monolith)                          |
-|                                                                                         |
-|   +---------------------------------------------------------------------------------+   |
-|   | API Layer: FastAPI Router (/api/v1)                                             |   |
-|   | - Health & Readiness Probes                                                     |   |
-|   | - Unified Error Handling & Request Validation                                   |   |
-|   | - Structured JSON Logging (Redaction of Sensitive PII)                          |   |
-|   +---------------------------------------------------------------------------------+   |
-|                                            |                                            |
-|   +----------------------------------------v----------------------------------------+   |
-|   | Core Domain Services                                                            |   |
-|   | - Credential Lifecycle Engine (Draft -> Issued -> Suspended -> Revoked)        |   |
-|   | - Tenant Isolation Engine (Institution Code context)                            |   |
-|   | - Cryptographic Verification Engine (Signed QR Reference Validation)           |   |
-|   | - Fee & Audit Ledger (Explicit UTC Timestamps)                                  |   |
-|   +---------------------------------------------------------------------------------+   |
-|                                            |                                            |
-|         +----------------------------------+----------------------------------+         |
-|         |                                                                     |         |
-|         v                                                                     v         |
-|   +----------------------------+                                +-------------------+   |
-|   | Persistence Layer          |                                | Integration Adapters| |
-|   | - PostgreSQL 16            |                                | (Explicit ABCs)   |   |
-|   | - SQLAlchemy 2.0 ORM       |                                +---------+---------+   |
-|   | - Alembic Schema Evolution |                                          |             |
-|   +----------------------------+                      +-------------------+-------------+
-|                                                       |                                 |
-+-------------------------------------------------------|---------------------------------+
-                                                        |
-                                                        v
-                                          +---------------------------+
-                                          | External / SIS Ecosystem  |
-                                          | - University SIS/SARIS    |
-                                          | - Mobile Money Gateways   |
-                                          |   (Simulated in Phase 1)  |
-                                          +---------------------------+
+```text
+Browser (React) -> /api/v1 (FastAPI policies/services) -> SQLAlchemy -> PostgreSQL
+                                  |
+                                  +-> simulated university/payment adapters
 ```
 
-### Core Design Philosophy
-AstraMind provides a **digital identity and verification layer**, not a replacement Student Information System (SIS). The platform does not claim sovereign authority over who is a student; instead, it binds to authorized institutional records.
+The frontend handles presentation, selected institution context, loading/error states, and route usability. It never decides whether access is allowed. The API authenticates the session and scopes every protected query.
 
----
+## Domain boundaries
 
-## 2. Frontend / Backend Responsibilities
+- Tenant structure: `Institution`, `Campus`, `Programme`.
+- Identity and access: `User`, `Membership`, `AuthSession`.
+- Student registry: `Student`, `ProgrammeEnrollment`.
+- Credential foundation: `DigitalCredential`, append-only `CredentialEvent`.
+- Financial foundation: `FeePolicy`, `Payment`, `RenewalRequest`.
+- Integration foundation: `IntegrationConfig`, `SyncRun`.
+- Governance: append-only `AuditEvent`.
 
-| Responsibility Area | Frontend (`apps/web`) | Backend (`apps/api`) |
-| :--- | :--- | :--- |
-| **Authentication & Context** | Maintains UI active tenant & role session; renders persona banners. | Validates tenant context, RBAC permissions, and issues session tokens. |
-| **Digital Card Presentation** | Renders university-branded card with photo, programme, expiry, and dynamic QR. Supports offline view via ServiceWorker/local storage. | Issues cryptographically signed credential tokens; verifies card integrity. |
-| **Verification Logic** | Camera QR scanner capture and credential reference submission. | Executes authoritative verification rules against tenant state and revocation lists. |
-| **Lifecycle Actions** | Form presentation for issue, suspend, and revoke with confirmation dialogs. | Enforces state transition invariants, commits transactions, and writes audit trails. |
-| **Persistence & Audit** | Ephemeral browser state only. | PostgreSQL persistence with explicit UTC timestamps for all state modifications. |
+Externally addressable records use UUIDs. Time values are timezone-aware and generated in UTC. Monetary values use `NUMERIC(14,2)`. Structured event/configuration fields use JSON and must exclude passwords, tokens, API secrets, and unnecessary personal data.
 
----
+Enrollment is historical rather than a permanent programme field on `Student`. Payment and renewal records remain foundations only; Phase 3 exposes no payment mutation command.
 
-## 3. Modular Monolith Architecture
+## Tenant isolation
 
-The backend is structured as a **modular monolith** within FastAPI:
+`institution_id` is the partition key. Tenant-bound parents also have composite uniqueness on `(id, institution_id)`, allowing composite foreign keys to prove that child and parent records belong to the same institution. This covers campus/student, student/programme enrollment, student/credential, credential/event, student/payment, student/renewal, and integration/sync relationships.
 
-```
-apps/api/app/
-├── api/
-│   └── v1/
-│       ├── api.py               # Aggregates v1 sub-routers
-│       └── endpoints/
-│           └── health.py        # /health and /ready probes
-├── core/
-│   ├── config.py                # Pydantic Settings & environment validation
-│   ├── errors.py                # Domain exceptions & Starlette error handlers
-│   └── logging.py               # Structured logging with sensitive data masking
-├── db/
-│   ├── base.py                  # SQLAlchemy DeclarativeBase
-│   └── session.py               # Engine configuration & connection pooling
-├── models/
-│   ├── base.py                  # TimestampMixin with UTC datetime
-│   └── institution.py           # Institution model (Tenant partition entity)
-├── schemas/
-│   ├── error.py                 # Standard error envelope
-│   ├── health.py                # Health & readiness payload schemas
-│   └── institution.py           # Institution DTOs
-└── integrations/
-    ├── university.py            # UniversityIntegrationAdapter ABC & Simulation
-    └── payment.py               # PaymentIntegrationAdapter ABC & Simulation
-```
+For an institution request, the authorization dependency:
 
-### Benefits of the Modular Monolith for this Platform:
-1. **Low Operational Overhead**: Single container deployment for API and single PostgreSQL database.
-2. **Strict In-Process Boundaries**: Domains communicate via well-defined Python interfaces rather than distributed network RPCs.
-3. **Prepared for Extraction**: Clear package boundaries allow future extraction of Verifier or SIS sync workers if load demands.
+1. Authenticates the opaque session cookie and active user.
+2. Requires `X-Institution-Context` and compares it to the institution UUID in the path.
+3. Loads an active membership joined to an active institution.
+4. Checks the endpoint's explicit role allow-list.
+5. Passes the verified institution UUID to tenant-filtered repository functions.
 
----
+Client-supplied institution IDs are selectors, never authority. Access is denied by default. A platform administrator can inspect membership configuration but cannot list student records without a separate registry membership. Students have a dedicated own-linked-record read; they cannot use the registry collection endpoint.
 
-## 4. Database Access Patterns
+## Authentication decision and threat model
 
-- **ORM Framework**: SQLAlchemy 2.0 with type-annotated `Mapped[...]` attributes.
-- **Session Lifecycle**: FastAPI dependency injection (`get_db`) providing one isolated `Session` per HTTP request with guaranteed cleanup in `finally`.
-- **Connection Management**: Connection pooling enabled with `pool_pre_ping=True` to detect and refresh stale socket connections.
-- **Migration Strategy**: Alembic manages all schema changes sequentially. Schema drift without migration scripts is strictly prohibited.
-- **Auditing**: Every record inherits from `TimestampMixin`, guaranteeing server-generated UTC `created_at` and `updated_at` values.
+Phase 2 uses server-side sessions:
 
----
+- Passwords are normalized by email and hashed with Argon2id through `argon2-cffi`.
+- Login creates a cryptographically random 48-byte URL-safe token.
+- The browser gets the token in an HttpOnly, SameSite=Lax cookie. `Secure` is enabled in production.
+- PostgreSQL stores only an HMAC-SHA256 token hash, expiry, revocation time, and non-sensitive timestamps.
+- Logout marks the session revoked before removing the cookie. `/auth/me` revalidates the session on every request.
+- Production rejects the bundled development session secret.
+- Exact CORS origins are configured with credentials enabled. Login/logout reject browser `Origin` values outside that set; SameSite=Lax provides an additional CSRF boundary.
+- Failed logins receive the same response whether an account is absent, inactive, or has a wrong password.
 
-## 5. Integration Adapter Strategy
+The current throttle is keyed by client address plus a digest of normalized email and is process-local. It protects the single-process demonstration but is not a multi-instance defense. A shared rate limiter/WAF, proxy-aware client addressing, MFA, password recovery, SSO, security monitoring, key rotation, and session administration remain production work.
 
-To ensure AstraMind remains reusable across multiple universities (e.g. LUANAR, KUHeS, MUST, MZUNI), all external interactions are mediated by **Explicit Adapter Interfaces**:
+## Persistence and migration strategy
 
-### University SIS Adapter Interface (`UniversityIntegrationAdapter`)
-```python
-class UniversityIntegrationAdapter(ABC):
-    @abstractmethod
-    def fetch_student_eligibility(self, institution_code: str, student_id: str) -> Optional[StudentEligibilityRecord]: ...
+One SQLAlchemy session is yielded per request and closed deterministically. Repositories accept an institution UUID for tenant reads. Alembic is the only schema-management mechanism; application startup never calls `create_all()`.
 
-    @abstractmethod
-    def verify_student_status(self, institution_code: str, student_id: str) -> bool: ...
-```
-- **Phase 1 Implementation**: `SimulatedUniversityAdapter` provides synthetic student fixtures for demonstration without contacting live registrar databases.
-- **Future Production Implementation**: Institutional REST/SOAP connectors or scheduled batch import connectors.
+Migration `0002_phase2` is non-destructive for the Phase 1 tenant table: it adds and backfills `slug`, `institution_code`, and `status`, retaining Phase 1 columns as deprecated compatibility storage. Their removal requires a separately reviewed data migration.
 
-### Payment Adapter Interface (`PaymentIntegrationAdapter`)
-```python
-class PaymentIntegrationAdapter(ABC):
-    @abstractmethod
-    def initiate_fee_payment(self, institution_code: str, student_id: str, amount_mwk: float, purpose: str) -> PaymentTransactionRecord: ...
+Deletion uses `RESTRICT` for identity, credential, and audit references. No API can update or delete credential/audit events. The current synchronous SQLAlchemy layer is acceptable for the demonstration; high-concurrency production work should profile it and either use sync handlers on a validated runtime or adopt SQLAlchemy's async engine.
 
-    @abstractmethod
-    def verify_payment_status(self, transaction_id: str) -> Optional[PaymentTransactionRecord]: ...
-```
-- **Phase 1 Implementation**: `SimulatedPaymentAdapter` generates synthetic transactions clearly tagged with `is_simulation=True`.
+## Credential lifecycle and eligibility
 
----
+`CredentialLifecycleService` is the only application interface that changes a credential state. The lifecycle is `active -> suspended -> active`, `active|suspended -> revoked`, and `active -> expired`. Revoked and expired credentials cannot be reinstated. Phase 3 issues directly to `active`; `pending` is retained only as a reserved future approval state.
 
-## 6. Tenant Isolation Principles
+Issuance locks the student record, evaluates persisted eligibility, checks the replacement policy, allocates a cryptographically random opaque `public_reference`, and writes the credential, `credential.issued` event, and audit record in one transaction. PostgreSQL adds a partial unique index on `(institution_id, student_id)` for `status='active'`, providing a final concurrency guard. A suspended credential must be reinstated or revoked before a new credential can be issued.
 
-1. **Partition Key**: Every university is designated an immutable `institution_code` (e.g., `luanar`).
-2. **Schema-Level Scoping**: Future student, credential, and audit tables will hold foreign keys referencing `institutions.id`.
-3. **Query Guarding**: Repositories must filter queries by the authenticated user's institution ID.
-4. **Administrative Scoping**: Institutional administrators (e.g., LUANAR Registry) cannot query or mutate records belonging to peer universities.
+The demo policy reference is `enrollment-active-v1`: the institution and programme must be active; the requested student must belong to the institution; and there must be a current active enrollment with a started date and no passed end date. It does not inspect payments. The `CREDENTIAL_VALIDITY_DAYS` environment setting supplies the default expiry period until institution-specific policy configuration is approved.
 
----
+Validity is always computed as `status == active && utc_now < expires_at`. Therefore an overdue credential cannot become valid because an expiry worker is late. `expire_overdue` locks eligible active rows, marks them expired, and writes a system lifecycle/audit event; repeat runs make no additional changes.
 
-## 7. Simulation vs Production Boundaries
+## Phase 4: QR-based verification architecture
 
-| Capability | Simulation Mode (Phase 1) | Production Requirement |
-| :--- | :--- | :--- |
-| **Student Eligibility** | Pre-seeded synthetic personas in `SimulatedUniversityAdapter`. | Secure API integration with University SIS / Registrar Database. |
-| **Payments** | Immediate simulation receipt generation with test transaction IDs. | Integration with Malawian payment rails (TNM Mpamba, Airtel Money, National Bank). |
-| **Authentication** | Persona switching for demonstration review. | Institutional Single Sign-On (SAML/OIDC) and secure JWT sessions. |
-| **QR Code Verification** | Validated against database credential status. | Asymmetric public key cryptography (ECDSA) with digital signatures and offline revocation lists. |
-| **Legal Status** | Non-binding technical pilot demonstration. | Formal institutional authorization, NCHE alignment, and Data Protection Act compliance. |
+QR-based student ID verification enables external verifiers (examiners, library staff,
+security officers) to authenticate a student credential against authoritative backend records
+without requiring verifiers to possess a student or registry administrative account.
+
+### 1. Cryptographic reference design & entropy
+- References are opaque public tokens generated via `secrets.token_urlsafe(24)` (192 bits of cryptographic entropy), formatted as `cr_<token>`.
+- The reference is unpredictable, has zero correlation with student IDs, names, or national identifiers, and is indexed with a unique database constraint (`ix_credentials_public_reference`).
+- The QR payload encodes ONLY the canonical verification URL (`https://<configured-host>/verify/<public_reference>`). No student PII, status flags, internal UUIDs, or credentials are embedded in the QR matrix.
+
+### 2. Authoritative state resolution & strict precedence
+Public verification does not trust any client claims or embedded QR attributes. The verification service queries persisted PostgreSQL state and computes outcome according to strict precedence:
+1. `invalid`: Unknown reference, malformed reference, pending credential, or inactive institution.
+2. `revoked`: Terminal status; returns `valid: false`.
+3. `expired`: Credential stored as expired or UTC clock exceeds `expires_at`; returns `valid: false`.
+4. `suspended`: Temporarily blocked by registry administration; returns `valid: false`.
+5. `valid`: Persisted active status, UTC unexpired, and issuing institution is active.
+
+### 3. Minimal public disclosure & privacy protection
+Public verification disclosures are intentionally minimized to prevent data harvesting:
+- Disclosed: status, boolean validity, issuing institution name, student full name (for visual identity matching), programme name, validity dates, and verification timestamp.
+- Excluded: student registration numbers, email addresses, dates of birth, internal UUIDs, payment records, and lifecycle event audit logs.
+- Invalid requests return a uniform generic message to prevent user enumeration or database discovery.
+
+### 4. Verification events & abuse controls
+- Each verification check records a minimal, append-only `VerificationEvent` record.
+- Audit records store outcome, timestamps, optional verifier UUID, and minimal sanitized metadata. Raw QR references and full client IP addresses are strictly omitted.
+- Logging failures are safely isolated in nested transactions so an audit issue never misreports a verification outcome.
+- Public endpoints enforce sliding-window IP rate limiting (`VERIFICATION_RATE_LIMIT_ATTEMPTS`).
+
+## Simulation and production boundary
+
+Seeded institutions and people are fictional, integrations are labelled synthetic, the example fee is inactive/unapproved, and no live payment provider or external university SIS is called. Production requires institutional authorization, privacy/legal review, operational controls, backups, monitoring, secret management, shared distributed throttling (Redis), and penetration testing; none is claimed by this phase.

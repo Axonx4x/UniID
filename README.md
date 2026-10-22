@@ -1,170 +1,149 @@
 # AstraMind Digital Student ID
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql)](https://www.postgresql.org)
-[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?style=flat)](https://www.sqlalchemy.org)
-[![Simulation Mode](https://img.shields.io/badge/Status-Simulation%20Demo%20Mode-orange)](#simulation-boundaries)
+A multi-tenant digital student identity foundation for higher-education demonstrations. The repository is in **Phase 3: digital credential lifecycle and issuance**. All bundled people, institutions, fees, and integration records are synthetic.
 
-A multi-tenant digital student identity, lifecycle management, and credential verification platform for higher education institutions in Malawi.
+## Implemented scope
 
-Designed as an authoritative digital credential layer that integrates with existing university Student Information Systems (SIS/SARIS) without requiring institutions to replace their underlying management software.
+- React 18, TypeScript, Vite, React Router, reusable UI components, and a responsive simulation-mode interface.
+- FastAPI under `/api/v1`, PostgreSQL, SQLAlchemy 2, and sequential Alembic migrations.
+- Health and database-readiness probes.
+- Phase 2 domain tables for institutions, campuses, programmes, users, memberships, students, enrollment history, credentials/events, fees/payments, renewals, integrations/sync runs, and audit events.
+- Centralized credential lifecycle service with enrollment-based eligibility, issuance, suspension, reinstatement, revocation, authoritative expiry checks, and idempotent expiry processing.
+- Transactional credential, lifecycle-event, and audit-event persistence with UUIDs, opaque public references, and a database constraint preventing concurrent active credentials per student.
+- Registry lifecycle UI, student credential page, opaque-reference QR generation/scanning, and public verification with authoritative revocation status.
+- Argon2 password hashing and opaque, revocable server-side sessions in HttpOnly cookies.
+- Deny-by-default role and institution authorization with an explicit `X-Institution-Context` header.
+- Backend-authenticated frontend session state, protected routes, role-aware navigation, institution selection, and logout.
+- Student onboarding with institution-domain validation, short-lived single-use email OTP challenges, resend cooldowns, attempt limits, automated simulated-SIS checks, roster/staff-review routing, and a verified-account handoff to the student dashboard.
+- Deterministic, idempotent, production-blocked synthetic seed data.
+- Automated authentication, authorization, tenant-integrity, seed, health, lint, type, and build checks.
 
----
+Not implemented: real payments, password recovery, SSO/MFA, or live university integrations.
 
-## 1. Platform Status & Implemented Foundation (Phase 1)
+## Prerequisites
 
-This repository is organized in progressive development phases. **Phase 1: Repository Foundation and Engineering Contracts** is complete and fully executable.
+- Python 3.11–3.13
+- Node.js 18+
+- Docker with Docker Compose
+- Git
 
-### Implemented in Phase 1:
-- [x] **Monorepo Architecture**: Clean separation between `apps/web` (React/Vite) and `apps/api` (FastAPI).
-- [x] **FastAPI Core & Monitoring**: API prefix `/api/v1`, application liveness probe (`GET /api/v1/health`), and readiness probe (`GET /api/v1/ready`) checking database connectivity.
-- [x] **Database & Migrations**: PostgreSQL 16 container, SQLAlchemy 2.0 ORM session management, Alembic migration engine, and initial migration `0001_initial` establishing the multi-tenant `institutions` table.
-- [x] **Configuration & Logging**: Pydantic Settings with startup validation, safe defaults, zero committed secrets, and structured JSON logging with automated redaction of sensitive credentials and PII.
-- [x] **Integration Contracts**: Explicit abstract adapter interfaces (`UniversityIntegrationAdapter`, `PaymentIntegrationAdapter`) with initial simulation implementations.
-- [x] **Unified Error Handling**: Strict error response envelopes matching documented API contracts.
-- [x] **Frontend Web Application**: Strict TypeScript Vite application, custom Vanilla CSS design system (Deep Navy palette, neutral surfaces, accessible typography), live backend and database connectivity indicators.
-- [x] **Quality Assurance**: Automated backend test suite with Pytest, frontend strict typechecking, ESLint, production build scripts, and Playwright end-to-end testing scaffolding.
+## Local setup
 
-### Planned for Subsequent Phases:
-- [ ] **Phase 2**: Student Digital Card interface, offline display caching, photo & registration number rendering, dynamic QR code generation.
-- [ ] **Phase 3**: Camera QR scanner verifier interface (Active, Expired, Revoked), Registry administrative dashboard (issuance, revocation, audit log), simulated payment flows.
-- [ ] **Phase 4**: Institutional SIS connectors, production authentication, and cryptographic signing.
-
----
-
-## 2. Technology Stack
-
-- **Backend**: Python 3.11+ / 3.13, FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, psycopg 3
-- **Frontend**: React 18, TypeScript (Strict Mode), Vite, React Router DOM, Lucide Icons, Vanilla CSS Design System
-- **Persistence & DevOps**: PostgreSQL 16, Docker Compose, Pytest, Playwright, ESLint
-
----
-
-## 3. Prerequisites
-
-Ensure you have the following installed locally:
-- **Python**: version 3.11, 3.12, or 3.13
-- **Node.js**: version 18+ (tested on Node v20/v26) and `npm`
-- **Docker & Docker Compose**: for running PostgreSQL container
-- **Git**
-
----
-
-## 4. Quickstart Guide
-
-### Step 1: Clone Repository and Setup Environment
 ```bash
-git clone https://github.com/astramind/digital-id.git
-cd digital-id
-
-# Copy environment template to active .env
 cp .env.example .env
 cp apps/web/.env.example apps/web/.env
-```
-
-Review the values in `.env`. Safe defaults are pre-configured for local development.
-
-### Step 2: Start PostgreSQL Database Container
-To avoid conflicts with local PostgreSQL instances, Docker Compose maps the database container to host port **5433**:
-```bash
+make install
 make db-up
-# Alternatively: docker compose up -d postgres
-```
-
-Verify the container is healthy:
-```bash
-docker compose ps
-```
-
-### Step 3: Run Database Migrations
-Apply the initial schema migration using Alembic:
-```bash
 make db-migrate
-# Alternatively: PYTHONPATH=apps/api .venv/bin/alembic -c apps/api/alembic.ini upgrade head
+make db-seed
 ```
 
-### Step 4: Start Backend API Server
+Start the services in separate terminals:
+
 ```bash
 make dev-api
-# Alternatively: cd apps/api && ../../.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-The API is available at:
-- **Root Info**: [http://localhost:8000/](http://localhost:8000/)
-- **Health Probe**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
-- **Readiness Probe**: [http://localhost:8000/api/v1/ready](http://localhost:8000/api/v1/ready)
-- **Interactive OpenAPI Docs**: [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs)
-
-### Step 5: Start Frontend Application
-In a separate terminal:
-```bash
 make dev-web
-# Alternatively: cd apps/web && npm run dev
 ```
-Open your browser at **[http://localhost:5173](http://localhost:5173)**. The page will display the public platform overview, architectural tenets, roadmap, and live real-time connectivity status with the backend and database.
 
----
+- Web: <http://localhost:5173>
+- API docs: <http://localhost:8000/api/v1/docs>
+- Health: <http://localhost:8000/api/v1/health>
+- Readiness: <http://localhost:8000/api/v1/ready>
 
-## 5. Verification and Testing
+PostgreSQL uses host port `5433` by default. `make db-seed` can be run repeatedly without duplicating records and refuses to run when `ENVIRONMENT=production`.
 
-### Backend Unit & Integration Tests
-Run the Pytest suite:
+## LUANAR presenter environment
+
+The optional LUANAR walkthrough uses only synthetic data and is disabled by default. Set `UNIID_DEMO_MODE=true` in `.env`, then run the normal migration/seed sequence followed by `make demo-seed`. Restart the API after changing the setting. The API health response is the authoritative source for this setting; when it is active, every web route displays `DEMO ENVIRONMENT · Simulated institutional data`.
+
+The seed creates a stable 200-record roster with the reserved domain `students.luanar.test`. The reviewer can download the same import-ready CSV from **Staff → Imports**, or use the validation scenario endpoint with `?validation_cases=true`; that variant adds a duplicate, a missing required name, and an invalid email for the preview screen without changing persisted data.
+
+Use these synthetic accounts after seeding:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| LUANAR reviewer | `luanar.registry@demo.invalid` | `LuanarRegistry!2026` |
+| LUANAR seeded student | `luanar.student@demo.invalid` | `LuanarStudent!2026` |
+
+For a fresh onboarding demonstration, register `student0001@students.luanar.test` as **Tione Kamanga** with registration number `LUA-DEMO-2026-0001`. The simulated mailbox autofill remains intentionally development-only. The roster adapter requires an exact number, email, and name match; unknown, mismatched, duplicate, and ineligible cases are routed to the existing reviewer queue. In this mode a credential is issued only after the student uploads a JPEG, PNG, or WebP image (maximum 5 MB).
+
+See [LUANAR demo runbook](docs/luanar-demo.md) for the presenter sequence and implementation map.
+
+## Synthetic development accounts
+
+These accounts exist only after `make db-seed` and must never be enabled as production credentials.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Student | `student@demo.invalid` | `DemoStudent!2026` |
+| Verifier | `verifier@demo.invalid` | `DemoVerifier!2026` |
+| Registry administrator | `registry@demo.invalid` | `DemoRegistry!2026` |
+| Platform administrator | `platform@demo.invalid` | `DemoPlatform!2026` |
+| Multi-institution roles | `multi.role@demo.invalid` | `DemoMultiRole!2026` |
+
+Northstar Institute of Applied Learning and Lakeside Technical College are fictional demonstration tenants. University of Livingstonia (UNILIA) is also present as a directory/onboarding demonstration tenant, using its public logo only for visual identification; this does not imply endorsement, affiliation, live data access, or an institutional integration. Northstar includes: an active student credential, an eligible student with no credential (issuance demo), an ineligible enrollment, a suspended credential, and a revoked credential. The illustrative fee is inactive and explicitly labelled as unapproved.
+
+## Onboarding walkthrough
+
+After starting both services, open `/onboarding`. The default UNILIA test path uses `cen-01-41-23@unilia.ac.mw` and registration number `cen-01-41-23`; use any name and a password of at least eight characters. The local simulated mailbox displays the six-digit OTP and can autofill it. Successful automated verification creates the student membership and credential, then the **Continue to Dashboard** action signs the student in. The corresponding synthetic registry account is `unilia.registry@demo.invalid` with password `DemoUniliaRegistry!2026`.
+
+OTP challenges are stored only as keyed hashes, expire after ten minutes, are single use, enforce a resend cooldown and lock after failed attempts. Local development uses an explicitly simulated mailbox and displays its code only when `OTP_DELIVERY_MODE=development` and `OTP_DEV_MAILBOX_ENABLED=true`. SMTP delivery remains available by setting `OTP_DELIVERY_MODE=smtp` and providing the SMTP values in `.env`.
+
+## Verification commands
+
 ```bash
 make test-api
-```
-Tests verify health probes, readiness checks (handling both online and degraded database states), contract error formatting, and simulation adapters.
-
-### Frontend Quality Checks
-```bash
-# TypeScript strict typechecking
-make typecheck-web
-
-# Frontend linting
 make lint-web
-
-# Production build test
+make typecheck-web
 make build-web
-```
-
-### Run All Checks
-```bash
 make test
 ```
 
----
+To verify the database directly:
 
-## 6. Project Architecture & Contracts
+```bash
+make db-migrate
+make db-seed
+curl http://localhost:8000/api/v1/ready
+```
 
-For comprehensive architectural specifications and engineering standards, refer to the documentation in `/docs`:
+## Environment variables
 
-- **[System Architecture](docs/architecture.md)**: System boundaries, modular-monolith design, database access patterns, adapter patterns, and tenant isolation principles.
-- **[Product Requirements (PRD)](docs/product-requirements.md)**: User roles, core modules, credential lifecycle states, payment separation rules, and demo boundaries.
-- **[API Contracts](docs/api-contracts.md)**: URI naming, request/response formats, standard error envelopes, and health probe specifications.
-- **[Demonstration Script](docs/demo-script.md)**: Demo narrative, personas (e.g. LUANAR City Campus), and the golden valid-to-revoked credential lifecycle walkthrough.
+| Variable | Purpose | Development default |
+| --- | --- | --- |
+| `ENVIRONMENT` | `development`, `testing`, `staging`, or `production` | `development` |
+| `SIMULATION_MODE` | Labels simulated behavior | `true` |
+| `UNIID_DEMO_MODE` | Opt-in, server-controlled LUANAR synthetic presenter environment; rejected in production | `false` |
+| `DATABASE_URL` | SQLAlchemy PostgreSQL URL | local port 5433 URL |
+| `BACKEND_CORS_ORIGINS` | Exact browser origins allowed with credentials | local Vite/API origins |
+| `SESSION_SECRET` | HMAC key for stored session-token hashes; minimum 32 characters | development-only value |
+| `SESSION_COOKIE_NAME` | HttpOnly cookie name | `astramind_session` |
+| `SESSION_TTL_MINUTES` | Absolute session duration | `480` |
+| `LOGIN_RATE_LIMIT_ATTEMPTS` | Failed attempts allowed per process/window | `5` |
+| `LOGIN_RATE_LIMIT_WINDOW_SECONDS` | Throttle window | `300` |
+| `CREDENTIAL_VALIDITY_DAYS` | Demo default validity period for newly issued credentials | `365` |
+| `VITE_API_BASE_URL` | Browser API base URL | `http://localhost:8000/api/v1` |
 
----
+Production startup rejects the bundled development `SESSION_SECRET`. See [.env.example](.env.example) for the complete database and application configuration.
 
-## 7. Simulation Boundaries & Disclaimers
+## Security and tenancy notes
 
-1. **Simulation Mode**: This platform is currently running in an explicit simulation mode (`SIMULATION_MODE=true`).
-2. **Synthetic Data**: Student records, matriculation numbers, and photos are synthetic fixtures created for institutional review.
-3. **No Claim of Formal Adoption**: Neither this platform nor AstraMind Labs claims that LUANAR, KUHeS, MUST, MZUNI, or any other institution has formally adopted or contracted the service.
-4. **Payment Separation**: Payment of an annual service fee does not establish student enrollment or identity. Academic status is determined exclusively by the university's authorized registrar records.
+- The browser receives only an opaque token; only its keyed hash is stored in `auth_sessions`.
+- Cookies are HttpOnly and SameSite=Lax, and become Secure in production. Unsafe auth requests reject untrusted browser origins.
+- Every institution route compares the path UUID with `X-Institution-Context`, then verifies an active user, unexpired session, active institution, active membership, and permitted role.
+- Platform administrators do not inherit registry access to student records.
+- Composite foreign keys enforce campus, programme, enrollment, credential, payment, renewal, and integration tenant consistency.
+- Credential eligibility requires the same active institution, student, active programme, and active current enrollment; payments are never consulted.
+- Registry lifecycle actions update status and append credential/audit history in the same database transaction. Revocation is terminal; an expired credential is invalid based on UTC time even before a worker materializes its stored status.
+- Replacement policy: a student may not receive another active credential, and a suspended credential must be reinstated or revoked before a replacement can be issued.
+- Phase 1 institution columns are retained as deprecated compatibility storage by the non-destructive Phase 2 migration.
 
----
+Known limitations: the eligibility policy is a documented demo default (`active` current enrollment in an active programme), not an institution-approved rule engine; login throttling is process-local; there is no session-management UI, MFA, recovery, SSO, or automated scheduled worker; synchronous SQLAlchemy access is suitable for the demonstration but should be profiled or moved to an async data layer before high-concurrency deployment. This repository does not claim production certification, statutory compliance, or institutional adoption.
 
-## 8. Troubleshooting
+## Documentation
 
-| Symptom | Cause | Solution |
-| :--- | :--- | :--- |
-| `503 Service Unavailable` on `/api/v1/ready` | PostgreSQL container is offline or unreachable on port 5433. | Run `make db-up` and confirm `docker compose ps` shows `astramind-postgres` as healthy. |
-| `Port 5432 already in use` | Host machine has local PostgreSQL running. | The provided setup uses port **5433** to prevent collisions. Verify `.env` sets `POSTGRES_PORT=5433`. |
-| Frontend displays `Backend Offline` | FastAPI dev server is not running on port 8000. | Start the API server with `make dev-api` and verify [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health). |
-| `npm error ERESOLVE` during install | Peer dependency resolution mismatch. | Run `npm install --legacy-peer-deps` inside `apps/web`. |
-
----
-
-## 9. License & Attribution
-
-Developed by **AstraMind Labs**. Proprietary demonstration platform for higher education institutional evaluation.
+- [Architecture](docs/architecture.md)
+- [Product requirements](docs/product-requirements.md)
+- [API contracts](docs/api-contracts.md)
+- [Demonstration script](docs/demo-script.md)
+- [LUANAR demo runbook](docs/luanar-demo.md)

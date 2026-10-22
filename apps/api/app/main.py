@@ -48,7 +48,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/", include_in_schema=False)
-def root():
+async def root():
     return JSONResponse(
         content={
             "service": settings.PROJECT_NAME,

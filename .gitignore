@@ -63,3 +63,7 @@ Thumbs.db
 # Docker volumes / scratch
 postgres_data/
 scratch/
+
+# Uploads
+apps/api/uploads/**
+!apps/api/uploads/.gitkeep

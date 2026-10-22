@@ -1,132 +1,112 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Shield, BookOpen } from "lucide-react";
-import { BackendStatusBadge } from "./BackendStatusBadge";
+import { Link } from "react-router-dom";
+import { GraduationCap, LogOut, LayoutDashboard, Building2 } from "lucide-react";
+import { useAuth } from "@/auth/AuthContext";
 
 export const Navbar: React.FC = () => {
-  const location = useLocation();
-
-  const navLinks = [
-    { label: "Overview", path: "/" },
-    { label: "Architecture", path: "/#architecture" },
-    { label: "API Contracts", path: "/#api-contracts" },
-    { label: "Roadmap", path: "/#roadmap" },
-  ];
+  const { user, logout } = useAuth();
+  const isStaff = user?.memberships?.some(
+    (m) => ["verifier", "registry_admin", "platform_admin"].includes(m.role) && m.status === "active"
+  );
 
   return (
-    <header
-      style={{
-        backgroundColor: "var(--color-primary)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-      }}
-    >
-      <div
-        className="container"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 64,
-        }}
-      >
-        {/* Brand / Logo */}
-        <Link
-          to="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            color: "#ffffff",
-            textDecoration: "none",
-          }}
-        >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: "8px",
-              backgroundColor: "var(--color-accent)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ffffff",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-            }}
-          >
-            <Shield size={20} />
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: "var(--font-family-display)",
-                fontWeight: 700,
-                fontSize: "1.125rem",
-                letterSpacing: "-0.3px",
-                lineHeight: 1.1,
-              }}
-            >
-              AstraMind
+    <header className="uni-navbar">
+      <div className="container">
+        <div className="uni-navbar-inner">
+          {/* Brand Logo & Subtitle */}
+          <Link to="/" className="uni-brand-link">
+            <div className="uni-brand-logo-icon">
+              <GraduationCap size={22} />
             </div>
-            <div
+            <div className="uni-brand-name">UniID</div>
+            <div className="uni-brand-divider" />
+            <div className="uni-brand-tagline">
+              <span>Digital Student Identity</span>
+              <span>for a Smarter Tomorrow</span>
+            </div>
+          </Link>
+
+          {/* Center Navigation Links: Briefing only */}
+          <nav className="uni-nav-links desktop-nav">
+            <a href="/#about" className="uni-nav-link">
+              About
+            </a>
+            <a href="/#features" className="uni-nav-link">
+              Features
+            </a>
+            <a href="/#how-it-works" className="uni-nav-link">
+              How It Works
+            </a>
+            <a href="/#universities" className="uni-nav-link">
+              Universities
+            </a>
+            <a href="/#support" className="uni-nav-link">
+              Support
+            </a>
+            <Link
+              to="/staff"
+              className="uni-nav-link"
               style={{
-                fontSize: "0.6875rem",
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.8px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                color: "#1E88E5",
                 fontWeight: 600,
               }}
             >
-              Digital Student ID
-            </div>
+              <Building2 size={15} />
+              <span>Reviewer Portal</span>
+            </Link>
+          </nav>
+
+          {/* Right Action / Authentication */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {user ? (
+              <>
+                <Link
+                  to={isStaff ? "/staff" : "/app"}
+                  className="uni-btn-login"
+                  style={{ gap: "6px" }}
+                >
+                  <LayoutDashboard size={15} />
+                  <span>{isStaff ? "Reviewer Console" : "Dashboard"}</span>
+                </Link>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => void logout()}
+                  style={{ color: "#64748B" }}
+                  title="Sign out"
+                >
+                  <LogOut size={15} />
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/staff"
+                  className="uni-btn-login mobile-only"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    color: "#1E88E5",
+                    borderColor: "#BFDBFE",
+                    backgroundColor: "#EFF6FF",
+                  }}
+                >
+                  <Building2 size={14} />
+                  <span>Reviewer</span>
+                </Link>
+                <Link to="/login" className="uni-btn-login">
+                  Sign In
+                </Link>
+                <Link to="/onboarding" className="btn btn-primary btn-sm">
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
-        </Link>
-
-        {/* Center Nav Links */}
-        <nav
-          style={{
-            display: "none",
-            alignItems: "center",
-            gap: "24px",
-          }}
-          className="desktop-nav"
-        >
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.path}
-              style={{
-                color: location.hash === link.path.replace("/", "") ? "#ffffff" : "#94a3b8",
-                fontSize: "var(--font-size-sm)",
-                fontWeight: 500,
-                textDecoration: "none",
-                transition: "color var(--transition-fast)",
-              }}
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* Right Action & Status Badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <BackendStatusBadge />
-          <a
-            href="http://localhost:8000/api/v1/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-outline btn-sm"
-            style={{
-              color: "#ffffff",
-              borderColor: "rgba(255, 255, 255, 0.2)",
-              fontSize: "12px",
-            }}
-          >
-            <BookOpen size={13} />
-            <span>API Docs</span>
-          </a>
         </div>
       </div>
     </header>

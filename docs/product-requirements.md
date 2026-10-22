@@ -1,121 +1,54 @@
-# AstraMind Digital Student ID: Product Requirements Document (PRD)
+# Product requirements
 
-## 1. Product Purpose
+## Purpose and governing rules
 
-AstraMind Digital Student ID is a multi-tenant digital student identity, lifecycle management, and credential verification platform for higher education institutions in Malawi.
+AstraMind Digital Student ID is a proposed multi-tenant identity and verification layer for higher education. An authorized institution—not a payment or the platform alone—determines enrollment and eligibility.
 
-### Primary Objectives:
-1. **Student Accessibility**: Provide students with an instantly accessible digital ID card on mobile devices, viewable even when offline on campus.
-2. **Instant On-Campus Verification**: Enable university security officers, librarians, and exam invigilators to verify student validity in seconds via QR code scanning.
-3. **Registry Governance**: Provide university registrars with authoritative control to issue, suspend, renew, or revoke student credentials with real-time propagation.
-4. **Cost Reduction**: Minimize plastic ID card printing, lost card replacement logistics, and administrative delays.
+1. Every institution is a separate tenant.
+2. Student, enrollment, credential, payment, and operational records are institution-scoped.
+3. Payment never proves identity, enrollment, or eligibility.
+4. Verification will consult backend rules and disclose only what is necessary.
+5. QR payload design must not expose student personal data.
+6. Credential and privileged changes require append-only history.
+7. Demonstration data is synthetic and does not imply adoption.
 
----
+## Phase 3 roles
 
-## 2. Target User Roles
+| Role | Phase 3 capability | Explicit boundary |
+| --- | --- | --- |
+| Student | Authenticate, choose an authorized institution, and view only the account-linked profile and current credential. | No other students, QR, verification, renewal, or lifecycle actions. |
+| Verifier | Authenticate and view academic structure for an authorized institution. | No student list or general personal data; verification results arrive in a later phase. |
+| Registry administrator | View students, eligibility, credentials, and lifecycle history; issue, suspend, reinstate, revoke, and materialize expiry in the selected institution. | Cannot cross institutions by changing a URL/header; reasons and history are required for lifecycle actions. |
+| Platform administrator | View discoverable institutions, academic structure, and membership configuration. | Does not inherit registry access to student personal data. |
 
-| Role | Description | Primary Workflows |
-| :--- | :--- | :--- |
-| **Student** | Enrolled university attendee. | Signs in, views digital ID card, opens full-screen QR code, checks validity & expiry, initiates simulated fee renewal. |
-| **Verifier** | Campus security, exam supervisor, library staff. | Scans QR code with camera or enters credential reference; reviews clear Active/Expired/Revoked result. |
-| **Registry Administrator** | Academic registrar or student affairs officer. | Searches student records, verifies eligibility against SIS, issues cards, suspends/revokes IDs, reviews audit history. |
-| **Platform Administrator** | AstraMind platform operations engineer. | Manages institution tenants, monitors adapter health, inspects system readiness and global statistics. |
+A user may hold different roles at different institutions. Each institution has one active/inactive membership per user, and the server validates the selected context on each request. The UI cannot grant or switch roles; it only selects among server-returned memberships.
 
----
+## Phase 3 domain requirements
 
-## 3. Core Modules
+- Institutions own campuses and programmes with institution-local unique codes.
+- Emails are normalized and globally unique; passwords are never stored in plaintext.
+- Student numbers are unique within an institution and may repeat across institutions.
+- A student may be linked to one user per institution; date of birth is omitted because this demo has no justified use for it.
+- Programme enrollments preserve academic history with pending, active, completed, suspended, and withdrawn states.
+- A registry administrator may issue an active credential only for a student with an active current enrollment in an active programme at the active institution.
+- A credential is valid only while its persisted state is `active` and its UTC expiry is in the future. Payment never contributes to eligibility.
+- Issuance, transitions, lifecycle events, and audit records are one transaction. One active credential per student is enforced by the database; a suspended credential is a replacement blocker until reinstated or revoked.
+- Suspension, reinstatement, and revocation require a non-empty documented reason. Revocation and expiry are terminal.
+- Registry actions and the student's own credential view return intentionally limited schemas; no QR or verifier disclosure is implemented.
+- Monetary values use fixed-precision decimals.
+- Integration configuration stores non-secret values or secret references, never credentials.
+- Credential and audit events have no mutation endpoints.
 
-### A. Student Portal
-- Card interface displaying authorized photo, student full name, registration number, academic programme, study level/year, and expiration date.
-- Dynamic QR code view with toggle for full-screen display.
-- Offline display support via client-side caching.
+## Authentication requirements
 
-### B. Verifier Interface
-- Rapid scanning interface optimized for low-bandwidth campus conditions.
-- Authoritative verification result states:
-  - **VALID / ACTIVE**: Student is actively enrolled and credential is valid.
-  - **REVOKED**: Credential has been revoked by registry (e.g., disciplinary suspension, withdrawal).
-  - **EXPIRED**: Credential has surpassed valid date without annual renewal.
-  - **UNKNOWN / INVALID**: QR reference not recognized by tenant.
+- Backend verification with Argon2 password hashes.
+- Revocable, expiring sessions stored server-side and transported in protected cookies.
+- Current-user and logout behavior sourced from the API, not browser booleans.
+- Uniform invalid-login errors, no secret/token logging, strict credentialed CORS origins, and unsafe-auth origin checks.
+- Development credentials appear only in the development seed/readme and the seed refuses production.
 
-### C. Registry Dashboard
-- Student search by registration number, name, or programme.
-- Credential issuance action for eligible students.
-- Revocation and suspension workflows with required audit reason.
-- Historical log of administrative events with explicit UTC timestamps.
+## Deferred product modules
 
-### D. Payment and Renewal Module
-- Clear presentation of annual digital ID service fee in Malawian Kwacha (MWK).
-- Transaction reference and receipt display.
-- **Strict Constraint**: Payment is separated from academic eligibility.
+The following are not Phase 3 acceptance targets: QR payloads or scanning, public verification-result disclosures, live SIS sync, real payment initiation, account linking, self-service role changes, full tenant CRUD, SSO, offline cards, and an institution-approved policy engine. The student card is a controlled authenticated display, not a bearer credential.
 
-### E. Platform Administration
-- Institution configuration (name, code, campus, primary/accent brand colors).
-- Integration adapter status monitoring.
-
----
-
-## 4. Credential Lifecycle Model
-
-```
-                    +--------------------+
-                    |  Eligible Record   |
-                    |  (SIS Synchronized)|
-                    +---------+----------+
-                              |
-                     [Issue Credential]
-                              |
-                              v
-     +-----------------> +----------+
-     |                   |  ACTIVE  | <-------------------+
-     |                   +----+-----+                     |
-     |                        |                           |
-[Re-activate]         [Suspend / Revoke]             [Annual Renewal]
-     |                        |                           |
-     |                        v                           |
-     |               +------------------+                 |
-     +-------------- |    SUSPENDED     |                 |
-                     +--------+---------+                 |
-                              |                           |
-                     [Permanent Revocation]        [Payment Confirmed]
-                              |                           |
-                              v                           |
-                     +------------------+        +--------+--------+
-                     |     REVOKED      |        |     EXPIRED     |
-                     +------------------+        +-----------------+
-```
-
-### Invariants:
-1. A credential cannot be issued unless the university SIS reports an active enrollment status.
-2. A revoked credential can never be silently re-validated without an explicit registry audit action.
-3. An expired credential ceases to verify as valid regardless of payment status until re-authorized.
-
----
-
-## 5. Payment and Eligibility Separation
-
-A critical governance requirement for Malawian universities:
-
-> **Fundamental Rule**: Payment of a student ID service fee is NOT proof of enrollment, identity, or academic good standing.
-
-- An individual who pays a fee but is disqualified or suspended by the university registrar must NOT be granted an active credential.
-- Academic status derives solely from the institution's official registrar data source.
-- In simulated demonstration mode, payments are visibly marked as illustrative and no real currency is processed.
-
----
-
-## 6. Verification and Privacy Requirements
-
-1. **No Plaintext PII in QR Codes**: The QR code must not encode sensitive student details (e.g., national ID, phone number) in plaintext. It must encode an opaque, signed credential reference.
-2. **Minimal Disclosure on Verification**: When scanned, the verifier sees only information necessary for identity assertion: photo, name, student ID, programme, and active status.
-3. **Tamper Detection**: Altering the QR payload must cause immediate verification failure.
-
----
-
-## 7. Explicit Demonstration Limitations
-
-To maintain institutional trust, the following boundaries are enforced:
-1. **Synthetic Data**: All student records, registration numbers (e.g. `LCC/2024/0101`), and photos in the demo are fictional.
-2. **No Claim of Official Endorsement**: The demonstration must never claim that LUANAR, KUHeS, MUST, MZUNI or any other institution has formally adopted the platform.
-3. **No Financial Claims**: The annual fee (e.g. MWK 15,000) is shown as an illustrative example subject to university policy and Students' Union consultation.
-4. **Simulation Labeling**: All simulation screens, receipts, and adapters are explicitly labelled with the `SIMULATION MODE` indicator.
+Any illustrative fee is inactive and unapproved. Any integration configuration is marked synthetic and has no live credentials. Production deployment additionally requires institutional agreements, privacy/legal assessment, security hardening, operational monitoring, incident response, backups, accessibility validation, and user research.

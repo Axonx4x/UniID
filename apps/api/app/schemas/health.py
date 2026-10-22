@@ -20,6 +20,7 @@ class HealthResponse(BaseModel):
     environment: str = Field(..., description="Application environment name")
     version: str = Field(..., description="Platform semantic version")
     simulation_mode: bool = Field(..., description="Flag indicating synthetic demonstration mode")
+    uniid_demo_mode: bool = Field(default=False, description="Server-authoritative LUANAR demo environment flag")
 
 
 class ReadyResponse(BaseModel):

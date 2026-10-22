@@ -1,28 +1,70 @@
-"""Institution schemas for tenant configuration."""
+"""Institution administration and tenant-scoped read schemas."""
 
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Generic, TypeVar
+
+from pydantic import BaseModel, ConfigDict
+
+T = TypeVar("T")
 
 
-class InstitutionBase(BaseModel):
-    code: str = Field(..., min_length=2, max_length=50, description="Short code identifier (e.g., luanar)")
-    name: str = Field(..., min_length=3, max_length=255, description="Full institution name")
-    short_name: str = Field(..., min_length=2, max_length=50, description="Abbreviation (e.g., LUANAR)")
-    campus: str = Field(default="Main Campus", max_length=100, description="Associated campus")
-    contact_email: str = Field(..., max_length=255, description="Official contact email")
-    is_active: bool = Field(default=True, description="Whether institution tenant is active")
-    brand_primary_color: str = Field(default="#0B192C", pattern=r"^#[0-9a-fA-F]{6}$")
-    brand_accent_color: str = Field(default="#1E88E5", pattern=r"^#[0-9a-fA-F]{6}$")
-
-
-class InstitutionCreate(InstitutionBase):
-    pass
-
-
-class InstitutionRead(InstitutionBase):
+class InstitutionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    name: str
+    slug: str
+    institution_code: str
+    status: str
+
+
+class CampusRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    institution_id: uuid.UUID
+    name: str
+    code: str
+    status: str
+
+
+class ProgrammeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    institution_id: uuid.UUID
+    code: str
+    name: str
+    status: str
+
+
+class MembershipRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    institution_id: uuid.UUID
+    role: str
+    status: str
+    created_at: datetime
+
+
+class StudentRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    institution_id: uuid.UUID
+    campus_id: uuid.UUID
+    student_number: str
+    user_id: uuid.UUID | None
     created_at: datetime
     updated_at: datetime
+
+
+class Page(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

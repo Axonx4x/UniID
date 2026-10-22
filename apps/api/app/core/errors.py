@@ -52,6 +52,31 @@ class TenantContextMissingException(AstraMindException):
         super().__init__(message=message, code=code, status_code=status.HTTP_400_BAD_REQUEST, details=details)
 
 
+class AuthenticationException(AstraMindException):
+    def __init__(self, message: str = "Authentication required"):
+        super().__init__(message=message, code="UNAUTHORIZED", status_code=status.HTTP_401_UNAUTHORIZED)
+
+
+class AuthorizationException(AstraMindException):
+    def __init__(self, message: str = "You are not authorized to perform this action"):
+        super().__init__(message=message, code="FORBIDDEN", status_code=status.HTTP_403_FORBIDDEN)
+
+
+class RateLimitException(AstraMindException):
+    def __init__(self, message: str = "Too many login attempts. Try again later."):
+        super().__init__(message=message, code="RATE_LIMITED", status_code=status.HTTP_429_TOO_MANY_REQUESTS)
+
+
+class EligibilityException(AstraMindException):
+    def __init__(self, message: str = "Student is not eligible for credential issuance", details: Optional[List[Any]] = None):
+        super().__init__(message=message, code="CREDENTIAL_INELIGIBLE", status_code=status.HTTP_409_CONFLICT, details=details)
+
+
+class CredentialTransitionException(AstraMindException):
+    def __init__(self, message: str = "Credential transition is not allowed", code: str = "INVALID_CREDENTIAL_TRANSITION"):
+        super().__init__(message=message, code=code, status_code=status.HTTP_409_CONFLICT)
+
+
 def format_error_response(code: str, message: str, details: Optional[List[Any]] = None) -> dict:
     return {
         "success": False,
@@ -102,6 +127,7 @@ def register_error_handlers(app: FastAPI) -> None:
             403: "FORBIDDEN",
             404: "NOT_FOUND",
             405: "METHOD_NOT_ALLOWED",
+            429: "RATE_LIMITED",
             500: "INTERNAL_SERVER_ERROR",
             503: "SERVICE_UNAVAILABLE",
         }

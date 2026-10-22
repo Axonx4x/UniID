@@ -1,7 +1,20 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Info, ShieldAlert } from "lucide-react";
+import { apiClient } from "@/services/apiClient";
 
 export const DemoBanner: React.FC = () => {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    apiClient.getHealth()
+      .then((health) => active && setEnabled(health.uniid_demo_mode === true))
+      .catch(() => active && setEnabled(false));
+    return () => { active = false; };
+  }, []);
+
+  if (!enabled) return null;
+
   return (
     <aside
       aria-label="Simulation Mode Notice"
@@ -39,15 +52,15 @@ export const DemoBanner: React.FC = () => {
             }}
           >
             <ShieldAlert size={12} />
-            SIMULATION MODE
+            DEMO ENVIRONMENT
           </span>
           <span>
-            Institutional Demonstration Environment &mdash; Synthetic student records and simulated adapters.
+            DEMO ENVIRONMENT · Simulated institutional data
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#64748b" }}>
           <Info size={12} />
-          <span>No formal university adoption implied &bull; Phase 1 Foundation</span>
+          <span>Synthetic records only &bull; no live institutional connection</span>
         </div>
       </div>
     </aside>

@@ -1,18 +1,19 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
-import { DemoBanner } from "./DemoBanner";
+import { Outlet, useLocation } from "react-router-dom";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 
 export const Layout: React.FC = () => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <DemoBanner />
       <Navbar />
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Outlet />
       </main>
-      <Footer />
+      {!isLoginPage && <Footer />}
     </div>
   );
 };
